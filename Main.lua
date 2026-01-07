@@ -5762,60 +5762,71 @@ end;
 			KeyFrame:WaitForChild("Duration").Text = "But expires soon!";
 		end
 	end);
-	-- [PART 1] HANDLE USERNAME DISPLAY SAFELY
+	-- [PART 1: UI SETUP AFTER LOAD]
     task.spawn(function()
-        -- Wait until we are sure the UI is active
-        local attempts = 0
+        -- Wait for Key Validation to finish before modifying UI
+        local maxWait = 20
         repeat 
-            task.wait(0.2)
-            attempts = attempts + 1
-        until KeyVailded or attempts > 10
+            task.wait(0.1)
+            maxWait = maxWait - 1
+        until KeyVailded or maxWait <= 0
         
-        if not KeyVailded then return end -- Stop if key failed (Prevents Title Error)
+        -- If key failed, STOP here. Do not touch UI elements.
+        if not KeyVailded then return end 
 
-        -- Now safe to set text
+        -- Safe to modify UI now
         if Main and Main:FindFirstChild("Title") and Main.Title:FindFirstChild("TextLabel") then
             Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.Name .. "!";
         end
         
+        -- Open Command
         local command = "/e open";
         game.Players.LocalPlayer.Chatted:Connect(function(m)
             if ((m:sub(1, # command):lower() == command) and not script.Parent.Enabled and InvisTriggerOpen) then
                 script.Parent.Enabled = true;
-                Main.EnableFrame.Visible = true; -- Fixed function call
+                if Main:FindFirstChild("EnableFrame") then
+                    Main.EnableFrame.Visible = true;
+                end
             end
         end);
     end);
 
-    -- [PART 2] KEY VALIDATION LOGIC
+    -- [PART 2: KEY VALIDATION LOGIC]
     do
-        print("[PUNK X] Starting Key Validation...")
+        print("[PUNK X] Script Loaded. Checking for Key...")
         
-        -- 1. Get Key (Check Global)
-        local key = getgenv().PUNK_X_KEY
+        -- CRITICAL: Wait a moment for variables to transfer from Loader
+        task.wait(0.5)
+
+        -- Check both Global environments
+        local key = getgenv().PUNK_X_KEY or _G.PUNK_X_KEY
         
-        -- 2. Load Auth Lib
+        -- Debug Print
+        if key then print("[PUNK X] Key Found: " .. tostring(key)) else print("[PUNK X] No Key Found in globals.") end
+
         local success, KeyLib = pcall(function()
             return loadstring(game:HttpGet("https://raw.githubusercontent.com/Silent-Caliber/System-Files/main/Auth.lua"))()
         end)
 
         if not success or not KeyLib then
-            warn("[PUNK X] Failed to load Auth Library")
+            warn("[PUNK X] Auth Lib Failed.")
             if script.Parent then script.Parent:Destroy() end
             return
         end
 
-        -- 3. Validate
         if key then
-            print("[PUNK X] Key Found: " .. string.sub(key, 1, 5) .. "...")
             local valid, data = KeyLib.Validate(key)
             if valid then
-                print("[PUNK X] Key Validated Successfully!")
-                KeyVailded = true -- Allows the UI threads to run
-                getgenv().PUNK_X_KEY = nil -- Clear for security
+                print("[PUNK X] Access Granted.")
+                KeyVailded = true -- Signal other threads to run
+                
+                -- Clear keys for security
+                getgenv().PUNK_X_KEY = nil
+                _G.PUNK_X_KEY = nil
+                
                 loadUI() -- Load the actual Executor Tabs
                 
-                -- Handle Expiry Date
+                -- Update Expiry Date if available
                 if getgenv().PUNK_X_EXPIRY then
                     task.spawn(function()
                         task.wait(1)
@@ -5827,20 +5838,19 @@ end;
                     end)
                 end
             else
-                warn("[PUNK X] Key Validation Failed.")
+                warn("[PUNK X] Invalid Key.")
                 if script.Parent then script.Parent:Destroy() end
             end
         else
             warn("⛔ No key provided! Use the Loader.")
-            -- DONT DESTROY IMMEDIATELY FOR DEBUGGING
-            -- Only warn so you can see the UI if you are testing locally
-            if not RunService:IsStudio() then
+            -- Only destroy if not in Studio (for debugging)
+            if not game:GetService("RunService"):IsStudio() then
                 if script.Parent then script.Parent:Destroy() end
             end
         end
     end
     
-    -- [PART 3] UI SCALING
+    -- [PART 3: UI SCALING]
     task.defer(function()
         local function UpdateSize()
             task.wait()
