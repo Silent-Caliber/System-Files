@@ -3164,12 +3164,16 @@ if v.Name == "Popups" then v.Visible = false return end
 	pcall(function()
 		getgenv()._PULL_INT();
 	end);
-	local CLONED_Detectedly = deepCopy(Detectedly or {});
-	Detectedly = nil;
-if not Detectedly then
-    createNotification("Executor not supported!", "Error", 5)
-    return
-end
+	-- // FIXED EXECUTOR DETECTION //
+    local CLONED_Detectedly = deepCopy(Detectedly or {})
+    
+    -- Manually link standard executor functions so saving works
+    if not CLONED_Detectedly.writefile and writefile then CLONED_Detectedly.writefile = writefile end
+    if not CLONED_Detectedly.readfile and readfile then CLONED_Detectedly.readfile = readfile end
+    if not CLONED_Detectedly.isfolder and isfolder then CLONED_Detectedly.isfolder = isfolder end
+    if not CLONED_Detectedly.delfile and delfile then CLONED_Detectedly.delfile = delfile end
+    if not CLONED_Detectedly.listfiles and listfiles then CLONED_Detectedly.listfiles = listfiles end
+    if not CLONED_Detectedly.makedir and makedir then CLONED_Detectedly.makedir = makedir end
 	local print = function(...)
 	end;
 	for i, v in pairs({
