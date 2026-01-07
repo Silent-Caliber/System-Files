@@ -5762,85 +5762,86 @@ end;
 			KeyFrame:WaitForChild("Duration").Text = "But expires soon!";
 		end
 	end);
-	task.spawn(function()
-		local command = "/e open";
-		repeat
-			task.wait(0.1);
-		until game.Players.LocalPlayer ~= nil
-		Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.Name .. "!";
-		game.Players.LocalPlayer.Chatted:Connect(function(m)
-			if ((m:sub(1, # command):lower() == command) and not script.Parent.Enabled and InvisTriggerOpen) then
-				script.Parent.Enabled = true;
-				openUI();
-			end
-		end);
-	end);
-	
--- // DYNAMIC KEY VALIDATION (FIXED) //
+	-- [PART 1] HANDLE USERNAME DISPLAY SAFELY
+    task.spawn(function()
+        -- Wait until we are sure the UI is active
+        local attempts = 0
+        repeat 
+            task.wait(0.2)
+            attempts = attempts + 1
+        until KeyVailded or attempts > 10
+        
+        if not KeyVailded then return end -- Stop if key failed (Prevents Title Error)
+
+        -- Now safe to set text
+        if Main and Main:FindFirstChild("Title") and Main.Title:FindFirstChild("TextLabel") then
+            Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.Name .. "!";
+        end
+        
+        local command = "/e open";
+        game.Players.LocalPlayer.Chatted:Connect(function(m)
+            if ((m:sub(1, # command):lower() == command) and not script.Parent.Enabled and InvisTriggerOpen) then
+                script.Parent.Enabled = true;
+                Main.EnableFrame.Visible = true; -- Fixed function call
+            end
+        end);
+    end);
+
+    -- [PART 2] KEY VALIDATION LOGIC
     do
-        -- 1. Load Auth Lib
+        print("[PUNK X] Starting Key Validation...")
+        
+        -- 1. Get Key (Check Global)
+        local key = getgenv().PUNK_X_KEY
+        
+        -- 2. Load Auth Lib
         local success, KeyLib = pcall(function()
             return loadstring(game:HttpGet("https://raw.githubusercontent.com/Silent-Caliber/System-Files/main/Auth.lua"))()
         end)
 
-        -- 2. Security Check 1: Did Lib load?
         if not success or not KeyLib then
-            warn("Failed to load KeyLib")
+            warn("[PUNK X] Failed to load Auth Library")
             if script.Parent then script.Parent:Destroy() end
             return
         end
 
-        -- 3. Security Check 2: Is Key provided?
-        local key = getgenv().PUNK_X_KEY
-        if not key then
-            warn("⛔ No key provided! Use the Loader.")
-            if script.Parent then script.Parent:Destroy() end
-            return
-        end
-
-        -- 4. Security Check 3: Is Key Valid?
-        local valid, data = KeyLib.Validate(key)
-        if not valid then
-            warn("⛔ Invalid Key! Use the Loader.")
-            if script.Parent then script.Parent:Destroy() end
-            return
-        end
-
-        -- 5. SUCCESS -> Load UI
-        KeyVailded = true
-        getgenv().PUNK_X_KEY = nil -- Clear key for security
-        loadUI()
-
-        -- 6. Update Expiry UI (Optional)
-        if getgenv().PUNK_X_EXPIRY then
-            task.spawn(function()
-                local attempts = 0
-                local HomeInfoFrame = nil
-                repeat 
-                    task.wait(0.5)
-                    if Pages and Pages:FindFirstChild("Home") and Pages.Home:FindFirstChild("Key") then
-                        HomeInfoFrame = Pages.Home.Key
-                    end
-                    attempts = attempts + 1
-                until HomeInfoFrame or attempts > 20
+        -- 3. Validate
+        if key then
+            print("[PUNK X] Key Found: " .. string.sub(key, 1, 5) .. "...")
+            local valid, data = KeyLib.Validate(key)
+            if valid then
+                print("[PUNK X] Key Validated Successfully!")
+                KeyVailded = true -- Allows the UI threads to run
+                getgenv().PUNK_X_KEY = nil -- Clear for security
+                loadUI() -- Load the actual Executor Tabs
                 
-                if HomeInfoFrame then
-                    if HomeInfoFrame:FindFirstChild("KeyText") then
-                        HomeInfoFrame.KeyText.Text = 'Your keys are currently <font color="rgb(125, 255, 125)">active</font> and will expire on...'
-                    end
-                    if HomeInfoFrame:FindFirstChild("Duration") then
-                        HomeInfoFrame.Duration.Text = getgenv().PUNK_X_EXPIRY
-                    end
+                -- Handle Expiry Date
+                if getgenv().PUNK_X_EXPIRY then
+                    task.spawn(function()
+                        task.wait(1)
+                        if Pages and Pages:FindFirstChild("Home") and Pages.Home:FindFirstChild("Key") then
+                            Pages.Home.Key.KeyText.Text = 'Keys Active'
+                            Pages.Home.Key.Duration.Text = getgenv().PUNK_X_EXPIRY
+                        end
+                        getgenv().PUNK_X_EXPIRY = nil
+                    end)
                 end
-                getgenv().PUNK_X_EXPIRY = nil
-            end)
+            else
+                warn("[PUNK X] Key Validation Failed.")
+                if script.Parent then script.Parent:Destroy() end
+            end
+        else
+            warn("⛔ No key provided! Use the Loader.")
+            -- DONT DESTROY IMMEDIATELY FOR DEBUGGING
+            -- Only warn so you can see the UI if you are testing locally
+            if not RunService:IsStudio() then
+                if script.Parent then script.Parent:Destroy() end
+            end
         end
     end
     
-    -- UI Scaling Logic
+    -- [PART 3] UI SCALING
     task.defer(function()
-        local Players = game:GetService("Players");
-        local Player = Players.LocalPlayer;
         local function UpdateSize()
             task.wait()
             if script.Parent and script.Parent:FindFirstChild("Main") then
