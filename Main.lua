@@ -5518,7 +5518,7 @@ if v.Name == "Popups" then v.Visible = false return end
                     task.spawn(function()
                         task.wait(1)
                         if Pages and Pages:FindFirstChild("Home") and Pages.Home:FindFirstChild("Key") then
-                            Pages.Home.Key.KeyText.Text = 'Keys Active'
+                            Pages.Home.Key.KeyText.Text = 'Your keys are currently <font color="rgb(125, 255, 125)">active</font> and will expire on...'
                             Pages.Home.Key.Duration.Text = getgenv().PUNK_X_EXPIRY
                         end
                         getgenv().PUNK_X_EXPIRY = nil
