@@ -2,16 +2,16 @@
 -- 🛡️ ANTI-DETECTION: SILENT CONSOLE
 -- ==========================================
 -- CHANGE: Added silent console to hide print statements from BAC
-local _original_print = print
-print = function(...) end -- All prints are now silent
+--local _original_print = print
+--print = function(...) end -- All prints are now silent
 
 -- Optional: Keep original for debugging
-if getgenv then
-    getgenv()._debug_print = _original_print
-end
-_G._debug_print = _original_print
-_G._original_print = _original_print  -- ✅ ADD THIS LINE
-_G._original_warn = warn  -- ✅ ADD THIS LINE TOO
+--if getgenv then
+   -- getgenv()._debug_print = _original_print
+--end
+--_G._debug_print = _original_print
+--_G._original_print = _original_print  -- ✅ ADD THIS LINE
+--_G._original_warn = warn  -- ✅ ADD THIS LINE TOO
 -- ==========================================
 
 local KeySystem = {}
@@ -168,7 +168,7 @@ function KeySystem.OpenGetKey()
     local url = KeySystem.GetKeyURL()
     if setclipboard then
         setclipboard(url)
-        print("[AUTH] Key URL copied to clipboard!")
+       -- print("[AUTH] Key URL copied to clipboard!")
     end
     return url
 end
@@ -270,7 +270,7 @@ function KeySystem.Validate(key, Premium_Verification, silent)
                 makefolder("Punk-X-Files")
             end
             writefile(CONFIG.fileName, key)
-            print("[AUTH] ✅ Key saved to " .. CONFIG.fileName)
+           -- print("[AUTH] ✅ Key saved to " .. CONFIG.fileName)
         end)
     end
     
@@ -299,11 +299,11 @@ function KeySystem.GetSavedKey()
                 pcall(function()
                     if isfolder and not isfolder("Punk-X-Files") then
                         makefolder("Punk-X-Files")
-                        print("[AUTH] Created Punk-X-Files folder")
+                      --  print("[AUTH] Created Punk-X-Files folder")
                     end
                     writefile(CONFIG.fileName, content)
                     delfile(CONFIG.oldFileName)
-                    print("[AUTH] ✅ Migrated key to Punk-X-Files/")
+                  --  print("[AUTH] ✅ Migrated key to Punk-X-Files/")
                 end)
             end
             return content
