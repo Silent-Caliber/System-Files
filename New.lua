@@ -69,6 +69,11 @@ G2L["1"]["ResetOnSpawn"] = false
 
 -- StarterGui.ScreenGui.LocalScript
 G2L["2"] = Instance.new("LocalScript", G2L["1"]);
+-- Studio export artefact: the whole UI tree is parented under this node,
+-- but the node has no Source (its body was hoisted into C_2() and is
+-- called explicitly).  Enabled, the client starts it as a LocalScript and
+-- logs it as a failed script; Disabled keeps the container and its children.
+G2L["2"]["Disabled"] = true;
 
 
 
@@ -3440,6 +3445,7 @@ end
 			NumberSequenceKeypoint.new(1, 1)
 		});
 		NScript["6"] = Instance.new("LocalScript", NScript["1"]);
+NScript["6"]["Disabled"] = true;
 		NScript["6"]['Name'] = [[LocalScript1]];
 		local function C_6()
 			local Types = {
@@ -7943,14 +7949,28 @@ task.spawn(function()
 		-- Get Key from Global
 		local key = getgenv().PUNK_X_KEY or _G.PUNK_X_KEY
 		
-		-- Load Auth Library (GBMofo)
-		local success, KeyLib = pcall(function()
-			return loadstring(game:HttpGet("https://raw.githubusercontent.com/Silent-Caliber/System-Files/main/Auth.lua"))()
-		end)
+		-- Reuse the library the loader already loaded.  Fetching a second copy
+		-- here meant an uncached download on the game thread, and when it came
+		-- back empty the branch below destroyed the ScreenGui - the "window
+		-- appears for a frame and disappears" report.
+		local KeyLib = (getgenv and getgenv().PUNK_X_AUTH) or _G.PUNK_X_AUTH
+		local auth_error = nil
 
-		if not success or not KeyLib then
-			warn("[PUNK X] Auth Lib Failed.")
-			if script.Parent then script.Parent:Destroy() end
+		if not KeyLib then
+			local ok, result = pcall(function()
+				return loadstring(game:HttpGet("https://raw.githubusercontent.com/Silent-Caliber/System-Files/main/Auth.lua?t=" .. tostring(os.time())))()
+			end)
+
+			if ok and type(result) == "table" then
+				KeyLib = result
+			else
+				auth_error = ok and ("Auth.lua returned " .. type(result)) or tostring(result)
+			end
+		end
+
+		if not KeyLib then
+			-- Keep the window: destroying it hides the reason and leaves a flash.
+			warn("[PUNK X] Auth Lib Failed: " .. tostring(auth_error))
 			return
 		end
 
