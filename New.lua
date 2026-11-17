@@ -5520,7 +5520,10 @@ local fpsOptions = {"Light", "Medium", "Extreme"}
         
         opt.MouseButton1Click:Connect(function()
             fpsLabel.Text = preset
-            currentFOV = FOV_PRESETS[fov]
+            -- Was: currentFOV = FOV_PRESETS[fov]
+            -- This is the FPS-preset handler: the variable here is `preset`,
+            -- and FOV_PRESETS is declared later in this function, so the old
+            -- line raised "attempt to index nil with nil" (loadstring:5523).
             fpsList.Visible = false
             
             PunkXSettings.fpsBoostPreset = preset
