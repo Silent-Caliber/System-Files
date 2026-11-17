@@ -1,3 +1,10 @@
+-- PunkX executor compatibility: hookfunction is optional here.
+-- Without this the UI aborts with "attempt to call a nil value"
+-- on device and nothing renders.
+if type(hookfunction) ~= "function" then
+    hookfunction = function(original) return original end
+end
+
 -- Decryption function
 local function decrypt(str)
     local result = ""
