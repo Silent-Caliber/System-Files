@@ -5858,19 +5858,21 @@ end
             end
         else
             warn("[PUNK X] Invalid Key.")
-            -- Never destroy the window here: deleting it hides the reason and is
-        -- indistinguishable from "the UI crashed".  The loader has already
-        -- validated this key once; a failed second check must not erase the UI.
-        warn("[PUNK X] key check failed - window kept for diagnosis")
+            -- Gate the window instead of destroying it: Enabled=false makes the
+        -- whole ScreenGui invisible and inert (same as Destroy for the user),
+        -- but the warn below still names the reason in the console.
+        warn("[PUNK X] key check failed - window disabled")
+        if script.Parent then script.Parent.Enabled = false end
         end
     end
 else
     warn("⛔ No key provided! Use the Loader.")
     if not game:GetService("RunService"):IsStudio() then
-        -- Never destroy the window here: deleting it hides the reason and is
-        -- indistinguishable from "the UI crashed".  The loader has already
-        -- validated this key once; a failed second check must not erase the UI.
-        warn("[PUNK X] key check failed - window kept for diagnosis")
+        -- Gate the window instead of destroying it: Enabled=false makes the
+        -- whole ScreenGui invisible and inert (same as Destroy for the user),
+        -- but the warn below still names the reason in the console.
+        warn("[PUNK X] key check failed - window disabled")
+        if script.Parent then script.Parent.Enabled = false end
     end
 end
 end
