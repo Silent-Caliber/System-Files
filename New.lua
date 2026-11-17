@@ -8053,14 +8053,20 @@ if getgenv().PUNK_X_EXPIRY then
 end
 		else
 			warn("[PUNK X] Invalid Key.")
-			if script.Parent then script.Parent:Destroy() end
+			-- Never destroy the window here: deleting it hides the reason and is
+        -- indistinguishable from "the UI crashed".  The loader has already
+        -- validated this key once; a failed second check must not erase the UI.
+        warn("[PUNK X] key check failed - window kept for diagnosis")
 		end
 	end
 else
 	warn("⛔ No key provided! Use the Loader.")
 	-- Only destroy if not in Studio (for debugging purposes)
 	if not game:GetService("RunService"):IsStudio() then
-		if script.Parent then script.Parent:Destroy() end
+		-- Never destroy the window here: deleting it hides the reason and is
+        -- indistinguishable from "the UI crashed".  The loader has already
+        -- validated this key once; a failed second check must not erase the UI.
+        warn("[PUNK X] key check failed - window kept for diagnosis")
 	end
 end
 end  -- 🔴 4TH END (closes the outer block, probably "do" from line ~2640)
