@@ -1,3 +1,4 @@
+print("[PunkX] release 2026-11-18a auth")
 -- ==========================================
 -- 🛡️ ANTI-DETECTION: SILENT CONSOLE
 -- ==========================================
@@ -27,8 +28,8 @@ local CONFIG = {
 
 -- // API CONFIGURATION //
 local API = {
-    -- Panda moved the API: the old host answers 308 to this one.  Calling it
-    -- directly removes the redirect hop entirely.
+    -- Panda moved the API: the old host answers 308 to this one.  Calling
+    -- it directly removes the redirect hop entirely.
     baseURL = "https://api.pandauth.com/api/v1",
     keyPageURL = "https://new.pandadevelopment.net/getkey/"
 }
@@ -202,7 +203,7 @@ function KeySystem.Validate(key, Premium_Verification, silent)
             Method = "POST",
             Headers = {
                 ["Content-Type"] = "application/json",
-                -- A Windows token on Android is exactly what a WAF filters on;
+                -- A Windows token on Android is what WAF rules key on;
                 -- a plain mobile browser UA is what the site serves normally.
                 ["User-Agent"] = "Mozilla/5.0 (Linux; Android 16; Mobile) "
                     .. "AppleWebKit/537.36 (KHTML, like Gecko) "
