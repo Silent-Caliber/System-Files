@@ -51,6 +51,9 @@ G2L["1"]["ScreenInsets"] = Enum.ScreenInsets.DeviceSafeInsets
 G2L["1"]["ClipToDeviceSafeArea"] = false
 G2L["1"]["ResetOnSpawn"] = false
 G2L["1"].Parent = GetSafeParent()
+-- Ownership marker: the loader destroys GUI containers carrying this so
+-- a UI from the previous place cannot survive into the next one.
+pcall(function() G2L["1"]:SetAttribute("PunkX", "ui") end)
 
 
 -- StarterGui.ScreenGui.LocalScript
