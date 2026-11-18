@@ -27,7 +27,9 @@ local CONFIG = {
 
 -- // API CONFIGURATION //
 local API = {
-    baseURL = "https://new.pandadevelopment.net/api/v1",
+    -- Panda moved the API: the old host answers 308 to this one.  Calling it
+    -- directly removes the redirect hop entirely.
+    baseURL = "https://api.pandauth.com/api/v1",
     keyPageURL = "https://new.pandadevelopment.net/getkey/"
 }
 
@@ -200,7 +202,11 @@ function KeySystem.Validate(key, Premium_Verification, silent)
             Method = "POST",
             Headers = {
                 ["Content-Type"] = "application/json",
-                ["User-Agent"] = "Roblox/WinInet" -- CHANGE: Generic User-Agent (was "PunkX-Loader")
+                -- A Windows token on Android is exactly what a WAF filters on;
+                -- a plain mobile browser UA is what the site serves normally.
+                ["User-Agent"] = "Mozilla/5.0 (Linux; Android 16; Mobile) "
+                    .. "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    .. "Chrome/131.0.0.0 Mobile Safari/537.36"
             },
             Body = HttpService:JSONEncode(requestBody)
         })
