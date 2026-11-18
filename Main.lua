@@ -40,13 +40,17 @@ end
 local randomName = game:GetService("HttpService"):GenerateGUID(false):sub(1, 8)
 
 -- // CREATE UI //
-G2L["1"] = Instance.new("ScreenGui", GetSafeParent())
+-- Properties before parenting: Roblox's respawn reset only spares a
+-- ScreenGui whose ResetOnSpawn is already false when it enters the
+-- container, and a UI created just before a spawn is otherwise cleared.
+G2L["1"] = Instance.new("ScreenGui")
 G2L["1"].Name = randomName
 G2L["1"]["IgnoreGuiInset"] = true
 G2L["1"]["DisplayOrder"] = 999
 G2L["1"]["ScreenInsets"] = Enum.ScreenInsets.DeviceSafeInsets
 G2L["1"]["ClipToDeviceSafeArea"] = false
 G2L["1"]["ResetOnSpawn"] = false
+G2L["1"].Parent = GetSafeParent()
 
 
 -- StarterGui.ScreenGui.LocalScript
