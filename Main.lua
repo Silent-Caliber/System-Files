@@ -1,4 +1,4 @@
-print("[PunkX] release 2026-11-19d ui-main")
+print("[PunkX] release 2026-11-19e ui-main")
 -- PunkX executor compatibility: hookfunction is optional here.
 -- Without this the UI aborts with "attempt to call a nil value"
 -- on device and nothing renders.
