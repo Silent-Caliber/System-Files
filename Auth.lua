@@ -1,4 +1,4 @@
-print("[PunkX] release 2026-11-19k auth")
+print("[PunkX] release 2026-11-19l auth")
 -- ==========================================
 -- 🛡️ ANTI-DETECTION: SILENT CONSOLE
 -- ==========================================
