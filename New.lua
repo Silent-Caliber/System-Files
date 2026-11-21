@@ -5919,16 +5919,36 @@ createButton(smallServerCard, "JOIN", Color3.fromRGB(70, 200, 120), function()
         )
     end)
     
-    if success and data and data.data then
+    if success and data and data.data and #data.data > 0 then
+        -- Pick the least-populated server, not only ones below 10 players:
+        -- in a busy game every public server has 10+, and the old loop then
+        -- did nothing at all with no notification.
+        local target = nil
+
         for _, server in ipairs(data.data) do
-            if server.playing and server.playing < 10 then
+            if server.id and server.id ~= game.JobId then
+                local playing = tonumber(server.playing) or 0
+
+                if not target or playing < (tonumber(target.playing) or 0) then
+                    target = server
+                end
+            end
+        end
+
+        if target then
+            local ok, err = pcall(function()
                 game:GetService("TeleportService"):TeleportToPlaceInstance(
                     game.PlaceId,
-                    server.id,
+                    target.id,
                     game:GetService("Players").LocalPlayer
                 )
-                break
+            end)
+
+            if not ok then
+                createNotification("Teleport failed: " .. tostring(err), "Error", 4)
             end
+        else
+            createNotification("No other server found", "Error", 3)
         end
     else
         createNotification("Failed to find small server", "Error", 3)
@@ -5949,16 +5969,30 @@ createButton(serverhopCard, "HOP", Color3.fromRGB(255, 150, 50), function()
         )
     end)
     
-    if success and data and data.data then
+    if success and data and data.data and #data.data > 0 then
+        local target = nil
+
         for _, server in ipairs(data.data) do
-            if server.id ~= game.JobId then
-                game:GetService("TeleportService"):TeleportToPlaceInstance(
-                    game.PlaceId,
-                    server.id,
-                    game:GetService("Players").LocalPlayer
-                )
+            if server.id and server.id ~= game.JobId then
+                target = server
                 break
             end
+        end
+
+        if target then
+            local ok, err = pcall(function()
+                game:GetService("TeleportService"):TeleportToPlaceInstance(
+                    game.PlaceId,
+                    target.id,
+                    game:GetService("Players").LocalPlayer
+                )
+            end)
+
+            if not ok then
+                createNotification("Teleport failed: " .. tostring(err), "Error", 4)
+            end
+        else
+            createNotification("No other server found", "Error", 3)
         end
     else
         createNotification("Failed to serverhop", "Error", 3)
