@@ -5166,7 +5166,10 @@ end)
     -- Settings tab, which removed every card after Script Detection.
     local marketplace = game:GetService("MarketplaceService")
     for _, method in ipairs({"PromptPurchase", "PromptProductPurchase", "PromptGamePassPurchase", "PromptPremiumPurchase"}) do
-        local target = marketplace and marketplace[method]
+        local mok, target = pcall(function()
+            return marketplace and marketplace[method]
+        end)
+        if not mok then target = nil end
         if type(target) == "function" then
             local old
             pcall(function()
@@ -5186,7 +5189,10 @@ end)
     local allowedPlaceId = game.PlaceId
     local oldTeleport
     local teleportService = game:GetService("TeleportService")
-    local teleportTarget = teleportService and teleportService.Teleport
+    local tok, teleportTarget = pcall(function()
+        return teleportService and teleportService.Teleport
+    end)
+    if not tok then teleportTarget = nil end
     if type(teleportTarget) == "function" then
         pcall(function()
             oldTeleport = hookfunction(teleportTarget, function(self, placeId, ...)
@@ -5229,7 +5235,10 @@ end)
         if enabled then
             local marketplace = game:GetService("MarketplaceService")
             for _, method in ipairs({"PromptPurchase", "PromptProductPurchase", "PromptGamePassPurchase", "PromptPremiumPurchase"}) do
-                local target = marketplace and marketplace[method]
+                local mok, target = pcall(function()
+                    return marketplace and marketplace[method]
+                end)
+                if not mok then target = nil end
                 if type(target) == "function" then
                     pcall(function()
                         hookfunction(target, function(...)
@@ -5256,7 +5265,10 @@ end)
             local currentPlaceId = game.PlaceId
             local oldTeleport2
             local teleportService = game:GetService("TeleportService")
-            local verifyTarget = teleportService and teleportService.Teleport
+            local tok, verifyTarget = pcall(function()
+                return teleportService and teleportService.Teleport
+            end)
+            if not tok then verifyTarget = nil end
             if type(verifyTarget) == "function" then
                 pcall(function()
                     oldTeleport2 = hookfunction(verifyTarget, function(self, placeId, ...)
@@ -5425,36 +5437,78 @@ end)
 
     local function optimize(obj)
         if not FPS.Enabled or not obj or not obj.Parent then return end
-        if isSafeObject(obj) then return end
-        if obj:IsA("BasePart") then save(obj, "CastShadow"); obj.CastShadow = false end
-        if obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") then save(obj, "Enabled"); obj.Enabled = false end
-        if FPS.Preset ~= "Light" and obj:IsA("Beam") then save(obj, "Enabled"); obj.Enabled = false end
-        if FPS.Preset ~= "Light" and obj:IsA("SurfaceAppearance") then obj:Destroy() end
+
+        -- Class check first: isSafeObject() walks two ancestors and scans the
+        -- name, so calling it for every object in the tree (including folders,
+        -- scripts and GUIs) was the expensive part of a full-map pass.
+        local isPart = obj:IsA("BasePart")
+
+        if isPart then
+            if isSafeObject(obj) then return end
+            save(obj, "CastShadow")
+            obj.CastShadow = false
+        elseif obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") then
+            if isSafeObject(obj) then return end
+            save(obj, "Enabled")
+            obj.Enabled = false
+        elseif FPS.Preset ~= "Light" and obj:IsA("Beam") then
+            save(obj, "Enabled")
+            obj.Enabled = false
+        end
+        -- SurfaceAppearance is deliberately NOT destroyed any more: that is
+        -- irreversible and left large parts of the map looking broken.
     end
 
     local function enableFPS(preset)
         if FPS.Enabled then return end
         FPS.Enabled = true
         FPS.Preset = preset
-        if preset == "Extreme" then settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end
-        for _, obj in ipairs(workspace:GetDescendants()) do optimize(obj) end
-        FPS.Connections.Descendant = workspace.DescendantAdded:Connect(optimize)
+
         if preset == "Extreme" then
-            local cam = workspace.CurrentCamera
-            if cam then
-                for _, v in ipairs(workspace:GetDescendants()) do
-                    if v:IsA("BasePart") and not v:IsDescendantOf(Players.LocalPlayer.Character) and not isSafeObject(v) then
-                        local dist = (v.Position - cam.CFrame.Position).Magnitude
-                        save(v, "LocalTransparencyModifier")
-                        if dist > 300 then v.LocalTransparencyModifier = 1 end
-                    end
-                end
-            end
+            pcall(function()
+                settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+            end)
         end
+
+        -- The map pass runs in slices.  One synchronous walk blocked the game
+        -- thread for seconds on a large world, and the old "Extreme" branch did
+        -- a second walk that hid every part farther than 300 studs - which is
+        -- what made most of Blox Fruits' map (and its 3D UI pieces) disappear.
+        -- Nothing here hides or destroys anything any more.
+        task.spawn(function()
+            local objects = workspace:GetDescendants()
+            local generation = (FPS.Generation or 0) + 1
+
+            FPS.Generation = generation
+
+            for i = 1, #objects, 400 do
+                if not FPS.Enabled or FPS.Generation ~= generation then return end
+
+                local last = math.min(i + 399, #objects)
+
+                for j = i, last do
+                    pcall(optimize, objects[j])
+                end
+
+                task.wait()
+            end
+
+            if not FPS.Enabled or FPS.Generation ~= generation then return end
+
+            FPS.Connections.Descendant = workspace.DescendantAdded:Connect(function(obj)
+                -- Deferred so streaming cannot run reflection work inline on
+                -- the engine's own adding thread.
+                task.defer(function()
+                    if FPS.Enabled then pcall(optimize, obj) end
+                end)
+            end)
+        end)
     end
 
     local function disableFPS()
         FPS.Enabled = false
+        -- Cancels a slice that is still walking the map.
+        FPS.Generation = (FPS.Generation or 0) + 1
         for _, c in pairs(FPS.Connections) do pcall(function() c:Disconnect() end) end
         FPS.Connections = {}
         for obj, props in pairs(FPS.Saved) do
