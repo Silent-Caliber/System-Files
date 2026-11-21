@@ -5911,7 +5911,7 @@ smallServerCard.Size = UDim2.new(1, 0, 0, 55)
 createButton(smallServerCard, "JOIN", Color3.fromRGB(70, 200, 120), function()
     local success, data = pcall(function()
         return game:GetService("HttpService"):JSONDecode(
-            game:HttpGet(
+            HttpGet(
                 "https://games.roblox.com/v1/games/" ..
                 game.PlaceId ..
                 "/servers/Public?sortOrder=Asc&limit=100"
@@ -5941,7 +5941,7 @@ serverhopCard.Size = UDim2.new(1, 0, 0, 55)
 createButton(serverhopCard, "HOP", Color3.fromRGB(255, 150, 50), function()
     local success, data = pcall(function()
         return game:GetService("HttpService"):JSONDecode(
-            game:HttpGet(
+            HttpGet(
                 "https://games.roblox.com/v1/games/" ..
                 game.PlaceId ..
                 "/servers/Public?limit=100"
@@ -7219,7 +7219,7 @@ local API_BASE_DELAY = 0.5
 local function fetchWithRetry(url, retries)
     retries = retries or 0
     local success, response = pcall(function() 
-        return game:HttpGet(url) 
+        return HttpGet(url) 
     end)
     
     if success then
@@ -8067,7 +8067,7 @@ task.spawn(function()
 
 		if not KeyLib then
 			local ok, result = pcall(function()
-				return loadstring(game:HttpGet("https://raw.githubusercontent.com/Silent-Caliber/System-Files/main/Auth.lua?t=" .. tostring(os.time())))()
+				return loadstring(HttpGet("https://raw.githubusercontent.com/Silent-Caliber/System-Files/main/Auth.lua?t=" .. tostring(os.time())))()
 			end)
 
 			if ok and type(result) == "table" then
