@@ -1,4 +1,4 @@
-print("[PunkX] release 2026-11-19s ui-new")
+print("[PunkX] release 2026-11-19t ui-new")
 -- PunkX executor compatibility: hookfunction is optional here.
 -- Without this the UI aborts with "attempt to call a nil value"
 -- on device and nothing renders.
@@ -5161,34 +5161,46 @@ end)
         end
     end)
 
-    -- Hook Purchase Methods
+    -- Hook Purchase Methods.  A method can be absent from the service
+    -- surface (nil) on some clients; hooking it used to abort the whole
+    -- Settings tab, which removed every card after Script Detection.
+    local marketplace = game:GetService("MarketplaceService")
     for _, method in ipairs({"PromptPurchase", "PromptProductPurchase", "PromptGamePassPurchase", "PromptPremiumPurchase"}) do
-        if game:GetService("MarketplaceService")[method] then
+        local target = marketplace and marketplace[method]
+        if type(target) == "function" then
             local old
-            old = hookfunction(game:GetService("MarketplaceService")[method], function(...)
-                if ScamProtectionEnabled and PurchaseGuard then
-                    warn("[Scam Protection] Purchase blocked")
-                    createNotification("Purchase Blocked", "Warn", 3)
-                    return
-                end
-                return old(...)
+            pcall(function()
+                old = hookfunction(target, function(...)
+                    if ScamProtectionEnabled and PurchaseGuard then
+                        warn("[Scam Protection] Purchase blocked")
+                        createNotification("Purchase Blocked", "Warn", 3)
+                        return
+                    end
+                    if old then return old(...) end
+                end)
             end)
         end
     end
 
-    -- Hook Teleport
+    -- Hook Teleport (guarded: Teleport may be C-only or absent)
     local allowedPlaceId = game.PlaceId
     local oldTeleport
-    oldTeleport = hookfunction(game:GetService("TeleportService").Teleport, function(self, placeId, ...)
-        if ScamProtectionEnabled and TeleportGuard then
-            if placeId ~= allowedPlaceId then
-                warn("[Scam Protection] Teleport blocked:", placeId)
-                createNotification("Teleport Blocked", "Warn", 3)
-                return
-            end
-        end
-        return oldTeleport(self, placeId, ...)
-    end)
+    local teleportService = game:GetService("TeleportService")
+    local teleportTarget = teleportService and teleportService.Teleport
+    if type(teleportTarget) == "function" then
+        pcall(function()
+            oldTeleport = hookfunction(teleportTarget, function(self, placeId, ...)
+                if ScamProtectionEnabled and TeleportGuard then
+                    if placeId ~= allowedPlaceId then
+                        warn("[Scam Protection] Teleport blocked:", placeId)
+                        createNotification("Teleport Blocked", "Warn", 3)
+                        return
+                    end
+                end
+                if oldTeleport then return oldTeleport(self, placeId, ...) end
+            end)
+        end)
+    end
     
     -- Script Detection Loop
     task.spawn(function()
@@ -5215,13 +5227,16 @@ end)
         saveSettings(PunkXSettings)
         
         if enabled then
+            local marketplace = game:GetService("MarketplaceService")
             for _, method in ipairs({"PromptPurchase", "PromptProductPurchase", "PromptGamePassPurchase", "PromptPremiumPurchase"}) do
-                if game:GetService("MarketplaceService")[method] then
-                    local old
-                    old = hookfunction(game:GetService("MarketplaceService")[method], function(...)
-                        warn("[Disable Robux] All purchases blocked")
-                        createNotification("Purchase Blocked (Global)", "Error", 3)
-                        return
+                local target = marketplace and marketplace[method]
+                if type(target) == "function" then
+                    pcall(function()
+                        hookfunction(target, function(...)
+                            warn("[Disable Robux] All purchases blocked")
+                            createNotification("Purchase Blocked (Global)", "Error", 3)
+                            return
+                        end)
                     end)
                 end
             end
@@ -5240,14 +5255,20 @@ end)
         if enabled then
             local currentPlaceId = game.PlaceId
             local oldTeleport2
-            oldTeleport2 = hookfunction(game:GetService("TeleportService").Teleport, function(self, placeId, ...)
-                if placeId ~= currentPlaceId then
-                    warn("[Verify Teleports] Blocked teleport to:", placeId)
-                    createNotification("Teleport Blocked (Verification)", "Warn", 3)
-                    return
-                end
-                return oldTeleport2(self, placeId, ...)
-            end)
+            local teleportService = game:GetService("TeleportService")
+            local verifyTarget = teleportService and teleportService.Teleport
+            if type(verifyTarget) == "function" then
+                pcall(function()
+                    oldTeleport2 = hookfunction(verifyTarget, function(self, placeId, ...)
+                        if placeId ~= currentPlaceId then
+                            warn("[Verify Teleports] Blocked teleport to:", placeId)
+                            createNotification("Teleport Blocked (Verification)", "Warn", 3)
+                            return
+                        end
+                        if oldTeleport2 then return oldTeleport2(self, placeId, ...) end
+                    end)
+                end)
+            end
             createNotification("Teleport Verification Enabled", "Success", 3)
         else
             createNotification("Teleport Verification Disabled", "Info", 3)
@@ -6773,6 +6794,22 @@ end))
         
         --print("[PunkX] Settings loaded successfully")
     end)
+    -- AutomaticCanvasSize is not updated by some Android clients; publish the
+    -- real content height so the performance cards stay reachable.
+    task.spawn(function()
+        for _ = 1, 20 do
+            local layout = Scripts:FindFirstChildOfClass("UIListLayout")
+            local height = layout and layout.AbsoluteContentSize.Y or 0
+            if height > 0 then
+                pcall(function()
+                    Scripts.AutomaticCanvasSize = Enum.AutomaticSize.None
+                    Scripts.CanvasSize = UDim2.new(0, 0, 0, math.ceil(height + 24))
+                end)
+            end
+            task.wait(1)
+        end
+    end)
+
 end -- End of InitTabs.Settings
 
 InitTabs.TabsData = function()
