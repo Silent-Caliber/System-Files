@@ -58,12 +58,14 @@ pcall(function() G2L["1"]:SetAttribute("PunkX", "ui") end)
 
 
 -- StarterGui.ScreenGui.LocalScript
-G2L["2"] = Instance.new("LocalScript", G2L["1"]);
+G2L["2"] = Instance.new("LocalScript");
 -- Studio export artefact: the whole UI tree is parented under this node,
 -- but the node has no Source (its body was hoisted into C_2() and is
--- called explicitly).  Enabled, the client starts it as a LocalScript and
--- logs it as a failed script; Disabled keeps the container and its children.
+-- called explicitly).  It must be disabled BEFORE it is parented: the
+-- client starts a LocalScript the moment it enters the tree, so setting
+-- Disabled afterwards still logs the failed-script error.
 G2L["2"]["Disabled"] = true;
+G2L["2"].Parent = G2L["1"];
 
 
 
@@ -3331,9 +3333,10 @@ if v.Name == "Popups" then v.Visible = false return end
 			NumberSequenceKeypoint.new(0.823, 1),
 			NumberSequenceKeypoint.new(1, 1)
 		});
-		NScript["6"] = Instance.new("LocalScript", NScript["1"]);
+		NScript["6"] = Instance.new("LocalScript");
 NScript["6"]["Disabled"] = true;
 		NScript["6"]['Name'] = [[LocalScript1]];
+		NScript["6"].Parent = NScript["1"];
 		local function C_6()
 			local Types = {
 				Success = {
