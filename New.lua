@@ -4421,7 +4421,12 @@ end
         end
         
         -- 1. UPDATE STROKES
+        local strokeCount = 0
         for _, obj in pairs(script.Parent:GetDescendants()) do
+            strokeCount += 1
+            if strokeCount % 200 == 0 then
+                task.wait()
+            end
             if obj:IsA("UIStroke") then
                 local isThemeStroke = (
                     obj.Color == Color3.fromRGB(160, 85, 255) or 
@@ -4450,7 +4455,12 @@ end
         end
 
         -- 3. UPDATE SLIDERS
+        local sliderCount = 0
         for _, slider in pairs(Scripts:GetDescendants()) do
+            sliderCount += 1
+            if sliderCount % 200 == 0 then
+                task.wait()
+            end
             if slider.Name == "sliderFill" and slider:IsA("Frame") then
                 slider.BackgroundColor3 = color
             end
@@ -4549,7 +4559,12 @@ end
         end
         
         -- 12. UPDATE GRADIENT
+        local gradientCount = 0
         for _, obj in pairs(script.Parent:GetDescendants()) do
+            gradientCount += 1
+            if gradientCount % 200 == 0 then
+                task.wait()
+            end
             if obj:IsA("UIGradient") and obj.Parent.Name == "Main" then
                 local r1 = math.clamp(math.floor(color.R * 255 * 0.8), 0, 255)
                 local g1 = math.clamp(math.floor(color.G * 255 * 0.5), 0, 255)
@@ -4568,7 +4583,12 @@ end
         end
         
         -- 13. UPDATE DROPDOWN STROKES & SEPARATORS
+        local dropdownCount = 0
         for _, obj in pairs(Scripts:GetDescendants()) do
+            dropdownCount += 1
+            if dropdownCount % 200 == 0 then
+                task.wait()
+            end
             if obj.Name == "ThemeStroke" and obj:IsA("UIStroke") then
                 obj.Color = color
             elseif obj.Name == "ThemeSeparator" and obj:IsA("Frame") then

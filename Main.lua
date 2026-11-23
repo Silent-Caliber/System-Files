@@ -5256,7 +5256,12 @@ NScript["6"]["Disabled"] = true;
 		
 		newToggle("FPS Boost", function(v)
 			if v then
+				local scanned = 0
 				for _, obj in pairs(game:GetDescendants()) do
+					scanned += 1
+					if scanned % 500 == 0 then
+						task.wait()
+					end
 					if obj:IsA("BasePart") then obj.CastShadow = false; obj.Material = "Plastic" end
 					if obj:IsA("Texture") or obj:IsA("Decal") then obj.Transparency = 1 end
 				end
