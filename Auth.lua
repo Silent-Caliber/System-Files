@@ -23,7 +23,7 @@ local CONFIG = {
     fileName = "Punk-X-Files/punk-x-key.txt",
     oldFileName = "punk-x-key.txt",
     autoSave = true,
-    discordWebhook = "https://discord.com/api/webhooks/1462092315190624330/BQy7iAZ8q5mnh18vIE3LLj2H9gaUnbvbo0jlscALQ3D5t5PXn1YBENHe_7kGk_Xb8vtu" -- Your Discord webhook
+    discordWebhook = "" -- removed from the client; logging is disabled
 }
 
 -- // API CONFIGURATION //
