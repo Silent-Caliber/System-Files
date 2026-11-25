@@ -6644,7 +6644,7 @@ end))
                     end
                     
                     -- Test message
-                    pcall(function() LogService:ExecuteScript('print("[PUNK X] 🟢 Console Ready!")' end)
+                    pcall(function() LogService:ExecuteScript('print("[PUNK X] 🟢 Console Ready!")') end)
                 end)
             end
         else
